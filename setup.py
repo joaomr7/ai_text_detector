@@ -23,5 +23,10 @@ setup(
     author='João Marcos Ressetti',
     author_email='jmressetti.3.4@gmail.com',
     packages=find_packages(),
-    install_requires=get_requirements('requirements.txt')
+    install_requires=get_requirements('requirements.txt'),
+    entry_points={
+        'console_scripts' : [
+            'setup_nltk = src.setup_nltk:main'
+        ]
+    }
 )

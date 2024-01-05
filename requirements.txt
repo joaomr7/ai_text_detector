@@ -1,6 +1,10 @@
 pandas
 numpy
+scipy
 matplotlib
 scikit-learn
+nltk
+symspellpy
+wordcloud
 streamlit
 -e .
