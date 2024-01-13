@@ -3,8 +3,8 @@ numpy
 scipy
 matplotlib
 scikit-learn
-nltk
 symspellpy
 wordcloud
+spacy
 streamlit
 -e .

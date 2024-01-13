@@ -14,7 +14,7 @@ For downloading and building  this project in your machine, type this commands i
 
 2. `pip install -r requirements.txt`
 
-3. `nltk_setup`
+3. `setup_spacy`
 
 Obs: It is recommended to create an environment (with conda, for example) to build this project on your machine.
 

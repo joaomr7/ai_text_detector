@@ -162,8 +162,5 @@ cython_debug/
 # logs
 logs/
 
-# nltk data
-nltk_data/
-
 # artifacts
 artifacts/

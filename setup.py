@@ -26,7 +26,7 @@ setup(
     install_requires=get_requirements('requirements.txt'),
     entry_points={
         'console_scripts' : [
-            'setup_nltk = src.setup_nltk:main'
+            'setup_spacy = scripts.setup_spacy:main'
         ]
     }
 )
