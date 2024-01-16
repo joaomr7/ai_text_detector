@@ -162,5 +162,5 @@ cython_debug/
 # logs
 logs/
 
-# artifacts
-artifacts/
+# catboost info
+catboost_info/
