@@ -13,11 +13,25 @@ from src.components.model_trainer import ModelTrainer
 
 @dataclass
 class DataIngestionConfig:
+    '''
+    Configuration class for storing file path of the output files of the data ingestion component.
+
+    Attributes
+    ---
+    * train_data_path: the file path to store the training data file.
+    * test_data_path: the file path to store the test data file.
+    * raw_data_path: the file path to store the raw data file.
+    '''
+
     train_data_path: str = os.path.join(ARTIFACTS_PATH, 'train.csv')
     test_data_path: str = os.path.join(ARTIFACTS_PATH, 'test.csv')
     raw_data_path: str = os.path.join(ARTIFACTS_PATH, 'raw.csv')
 
 class DataIngestion:
+    '''
+    Class responsible for data ingestion.
+    '''
+
     def __init__(self):
         self.ingestion_config = DataIngestionConfig()
 
@@ -48,6 +62,10 @@ class DataIngestion:
         )
     
 def main():
+    '''
+    This function is responsible for running the data ingestion, data transformation and model training workflows
+    '''
+
     data_ingestion = DataIngestion()
     train_data_path, test_data_path = data_ingestion.initiate_data_ingestion()
 

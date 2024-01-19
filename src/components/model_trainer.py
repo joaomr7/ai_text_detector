@@ -1,7 +1,9 @@
 import os
 from dataclasses import dataclass
 
+from sklearn.ensemble import VotingClassifier
 from sklearn.linear_model import LogisticRegression
+from xgboost import XGBClassifier
 
 from src.exception import CustomException
 from src.logger import logging
@@ -9,13 +11,26 @@ from src.logger import logging
 from src.paths import ARTIFACTS_PATH
 from src.utils import save_object, evaluate_model_performance, format_model_metrics
 
-MODEL_BEST_LIMIAR = 0.55
+# this constant stores the best decision limiar of the model
+MODEL_BEST_LIMIAR = 0.49
 
 @dataclass
 class ModelTrainerConfig:
+    '''
+    Configuration class for storing file path to the trained model object.
+
+    Attributes
+    ---
+    * trained_model_file_path: the file path to store the trained model object.
+    '''
+
     trained_model_file_path: str = os.path.join(ARTIFACTS_PATH, 'model.pkl')
 
 class ModelTrainer:
+    '''
+    Class responsible for training the ML model.
+    '''
+
     def __init__(self):
         self.model_trainer_config = ModelTrainerConfig()
 
@@ -27,17 +42,32 @@ class ModelTrainer:
                 test_array[:, :-1],  test_array[:, -1],
             )
 
-            model_parameters = {
+            logistic_regression_parameters = {
                 'solver': 'lbfgs',
                 'penalty': 'l2',
                 'C' : 19.312640661491187,
                 'class_weight': 'balanced',
                 'fit_intercept': False,
                 'max_iter' : 2000, 
-                'random_state' :42
+                'random_state' : 42
             }
 
-            model = LogisticRegression(**model_parameters)
+            xgboost_parameters = {
+                'booster': 'gbtree', 
+                'eta': 0.21918159875692625, 
+                'eval_metric': 'auc', 
+                'max_depth': 8, 
+                'max_leaves': 7, 
+                'n_estimators': 37, 
+                'objective': 
+                'binary:logistic', 
+                'seed': 42
+            }
+
+            model = VotingClassifier(estimators=[
+                ('lr_model', LogisticRegression(**logistic_regression_parameters)),
+                ('xgb_model', XGBClassifier(**xgboost_parameters))
+            ], voting='soft')
 
             logging.info('Initiate model training.')
             model.fit(X_train, y_train)

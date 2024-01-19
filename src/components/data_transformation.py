@@ -1,5 +1,4 @@
 import os
-import re
 from dataclasses import dataclass
 
 import numpy as np
@@ -11,8 +10,11 @@ from spacy.tokens import Doc
 from symspellpy import SymSpell, Verbosity
 import importlib.resources
 
+import textstat
+
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 
 from src.exception import CustomException
@@ -25,6 +27,7 @@ class TextPreprocessing(BaseEstimator, TransformerMixin):
     '''
     Custom sklearn transformer to apply text preprocessing in text data.
     '''
+
     def __init__(self):
         # setting up spacy and disabling unused pipeline components
         self.nlp = spacy.load('en_core_web_md', disable=['parser', 'ner', 'lemmatizer', 'textcat', 'custom'])
@@ -41,90 +44,121 @@ class TextPreprocessing(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         try:
-
-            # create spacy docs
+            # tranfrom texts in spacy docs
             docs = [doc for doc in self.nlp.pipe(X)]
 
             text_vectors = []
-            contractions_counts = []
             typos_counts = []
+            reading_ease_scores = []
+            lexical_diversity_scores = []
 
-            contractions_patterns = [
-                r'\b(\w+)\'(\w+)\b',
-                r'\'(\w+)\b'
-            ]
+            def calculate_reading_ease_score(text):
+                '''
+                Helper function to calculate reading ease score.
+                '''
+                try:
+                    return textstat.flesch_reading_ease(text)
+                except ZeroDivisionError:
+                    return 0.0
+                
+            def calculate_lexical_diversity_score(words_list):
+                '''
+                Helper function to calculate lexical diversity score from the words list.
+                '''
+                total_words_count = len(words_list)
+                unique_words_count = len(set(words_list))
+
+                if total_words_count == 0:
+                    return 0.0
+                else:
+                    return unique_words_count / total_words_count
 
             for doc in docs:
-                # count contractions
-                contractions_count = 0
-                for pattern in contractions_patterns:
-                    matches = re.findall(pattern, doc.text)
-                    contractions_count += len(matches)
 
-                contractions_counts.append(contractions_count)
+                # reading ease score
+                reading_ease_scores.append(calculate_reading_ease_score(doc.text))
 
                 # count typos
                 typos_count = 0
 
+                nouns = []
                 words = []
                 spaces = []
                 for token in doc:
-                    if not re.match(r'[a-zA-Z]|\'[a-zA-Z]', token.text): # ignore irrelevant information
+                    if not token.is_alpha: # ignore irrelevant information
                         continue
 
                     if token.is_stop: # ignore stopwords
                         continue
 
-                    # lookup for typo
-                    correct_word = ''
-                    suggestions = self.sym_spell.lookup(token.text, Verbosity.CLOSEST, max_edit_distance=1) # lookup for typo
-
-                    if not suggestions:
-                        correct_word = token.text
-                        typos_count += 1
-
-                    elif suggestions[0].term != token.text:
-                        correct_word = suggestions[0].term
-                        typos_count += 1
-
-                    else:
-                        correct_word = token.text
-
                     if token.pos_ in ['NOUN', 'PROPN']: # ignore nouns
+                        nouns.append(token.text.lower()) # consider nouns just to lexical diversity calculation
                         continue
 
-                    words.append(correct_word)
+                    # lookup for typo
+                    word = token.text.lower()
+                    suggestions = self.sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=1) # lookup for typo
+
+                    # check if is a typo
+                    if not suggestions or not any(suggestion.term == word for suggestion in suggestions):
+                        typos_count += 1
+                        continue
+
+                    words.append(word)
                     spaces.append(token.whitespace_)
 
+                # add typos count
                 typos_counts.append(typos_count)
 
+                # lexical diversity
+                lexical_diversity_scores.append(calculate_lexical_diversity_score(words + nouns))
+
+                # create and add text vector to list
                 clean_doc = Doc(vocab=self.nlp.vocab, words=words, spaces=spaces)
                 text_vectors.append(clean_doc.vector)
 
-            return np.column_stack([text_vectors, contractions_counts, typos_counts])
-        
+            # return numpy array
+            return np.column_stack([text_vectors, typos_counts, reading_ease_scores, lexical_diversity_scores])
+
         except Exception as e:
             raise CustomException(e)
 
 @dataclass
 class DataTransformationConfig:
+    '''
+    Configuration class for storing file path to the preprocessor object.
+
+    Attributes
+    ---
+    * preprocessor_obj_file_path: the file path to store the preprocessor object.
+    '''
+
     preprocessor_obj_file_path: str = os.path.join(ARTIFACTS_PATH, 'preprocessor.pkl')
 
 class DataTransformation:
+    '''
+    Class responsible for create the data preprocessor.
+    '''
+
     def __init__(self):
         self.data_transformation_config = DataTransformationConfig()
 
     def get_data_transformer_object(self):
 
         try:
-            pipeline = Pipeline(
+            transformer = Pipeline(
                 steps=[
                     ('text_preprocessing', TextPreprocessing()),
-                    ('scaler', MinMaxScaler())
+                    ('scaling', ColumnTransformer(
+                        transformers=[
+                            ('min_max_scaler', MinMaxScaler(), slice(0, 301)),
+                            ('std_scaler', StandardScaler(), slice(301, 303))
+                        ]
+                    ))
                 ]
             )
-
-            return pipeline
+            
+            return transformer
 
         except Exception as e:
             raise CustomException(e)
