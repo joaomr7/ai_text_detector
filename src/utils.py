@@ -1,11 +1,16 @@
 import os
 import pickle
-from pathlib import Path
 
 from src.exception import CustomException
 from src.paths import crate_directory_if_not_exist
 
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
+
+# fix path issues
+import pathlib
+from pathlib import Path
+
+pathlib.PosixPath = pathlib.WindowsPath
 
 def save_object(file_path, obj):
     try:
