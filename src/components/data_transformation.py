@@ -1,6 +1,8 @@
 import os
 from dataclasses import dataclass
 
+import re
+
 import numpy as np
 import pandas as pd
 
@@ -13,8 +15,7 @@ import importlib.resources
 import textstat
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import Pipeline
 
 from src.exception import CustomException
@@ -41,84 +42,118 @@ class TextPreprocessing(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         return self
+        
+    def __calculate_reading_ease_score(self, doc: Doc) -> int:
+        '''
+        Helper function to calculate reading ease score.
+
+        Parameters
+        ---
+        * doc: spacy doc.
+
+        Return
+        ---
+        * reading ease score.
+        '''
+
+        try:
+            return textstat.flesch_reading_ease(doc.text)
+        except ZeroDivisionError:
+            return 0
+        
+    def __calculate_lexical_diversity_score(self, doc: Doc) -> float:
+        '''
+        Helper function to calculate lexical diversity score.
+
+        Parameters
+        ---
+        * doc: spacy doc.
+
+        Return
+        ---
+        * lexical diversity score.
+        '''
+
+        # get words count
+        total_words_count = len(doc)
+        unique_words_count = len(set(token.text.lower() for token in doc))
+
+        if total_words_count == 0:
+            return 0.0
+        else:
+            return unique_words_count / total_words_count
+     
 
     def transform(self, X, y=None):
+        '''
+        This function applies:
+            * text tokenization
+            * stopwords removing
+            * irrelevant information removing
+            * nouns removing
+            * typos fixing
+            * word2vec with spacy
+        
+        Also, this function calculate:
+            * lexical diversity score
+            * reading ease score
+
+        Parameters
+        ---
+        * data: text data to prepare the data
+        
+        Returns
+        ---
+        * a numpy array with the columns: 300 size vector (representing the text), lexical_deversity_score and reading_ease_score
+        '''
         try:
-            # tranfrom texts in spacy docs
+            # tranfrom texts in spacy docs (wich applies tokenization)
             docs = [doc for doc in self.nlp.pipe(X)]
 
             text_vectors = []
-            typos_counts = []
             reading_ease_scores = []
             lexical_diversity_scores = []
-
-            def calculate_reading_ease_score(text):
-                '''
-                Helper function to calculate reading ease score.
-                '''
-                try:
-                    return textstat.flesch_reading_ease(text)
-                except ZeroDivisionError:
-                    return 0.0
-                
-            def calculate_lexical_diversity_score(words_list):
-                '''
-                Helper function to calculate lexical diversity score from the words list.
-                '''
-                total_words_count = len(words_list)
-                unique_words_count = len(set(words_list))
-
-                if total_words_count == 0:
-                    return 0.0
-                else:
-                    return unique_words_count / total_words_count
 
             for doc in docs:
 
                 # reading ease score
-                reading_ease_scores.append(calculate_reading_ease_score(doc.text))
+                reading_ease_scores.append(self.__calculate_reading_ease_score(doc))
 
-                # count typos
-                typos_count = 0
+                # lexical diversity score
+                lexical_diversity_scores.append(self.__calculate_lexical_diversity_score(doc))
 
-                nouns = []
                 words = []
                 spaces = []
                 for token in doc:
-                    if not token.is_alpha: # ignore irrelevant information
-                        continue
-
-                    if token.is_stop: # ignore stopwords
+                    if token.is_stop or not re.match('[a-zA-Z]', token.text): # ignore stopwords and irrelevant information
                         continue
 
                     if token.pos_ in ['NOUN', 'PROPN']: # ignore nouns
-                        nouns.append(token.text.lower()) # consider nouns just to lexical diversity calculation
                         continue
 
-                    # lookup for typo
                     word = token.text.lower()
-                    suggestions = self.sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=1) # lookup for typo
 
-                    # check if is a typo
-                    if not suggestions or not any(suggestion.term == word for suggestion in suggestions):
-                        typos_count += 1
-                        continue
+                    # check if it has vector representaion
+                    if not token.has_vector:
+                        # lookup for typo
+                        suggestions = self.sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=1)
 
+                        # check if has any suggestion
+                        if not suggestions:
+                            continue
+
+                        # fix typo to the closest suggestion
+                        word = suggestions[0].term
+                            
                     words.append(word)
                     spaces.append(token.whitespace_)
-
-                # add typos count
-                typos_counts.append(typos_count)
-
-                # lexical diversity
-                lexical_diversity_scores.append(calculate_lexical_diversity_score(words + nouns))
 
                 # create and add text vector to list
                 clean_doc = Doc(vocab=self.nlp.vocab, words=words, spaces=spaces)
                 text_vectors.append(clean_doc.vector)
 
             # return numpy array
-            return np.column_stack([text_vectors, typos_counts, reading_ease_scores, lexical_diversity_scores])
+            return np.column_stack([text_vectors, lexical_diversity_scores, reading_ease_scores])
 
         except Exception as e:
             raise CustomException(e)
@@ -149,12 +184,7 @@ class DataTransformation:
             transformer = Pipeline(
                 steps=[
                     ('text_preprocessing', TextPreprocessing()),
-                    ('scaling', ColumnTransformer(
-                        transformers=[
-                            ('min_max_scaler', MinMaxScaler(), slice(0, 301)),
-                            ('std_scaler', StandardScaler(), slice(301, 303))
-                        ]
-                    ))
+                    ('scaling', MinMaxScaler())
                 ]
             )
             

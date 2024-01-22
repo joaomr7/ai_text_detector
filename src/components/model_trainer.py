@@ -12,7 +12,7 @@ from src.paths import ARTIFACTS_PATH
 from src.utils import save_object, evaluate_model_performance, format_model_metrics
 
 # this constant stores the best decision limiar of the model
-MODEL_BEST_LIMIAR = 0.49
+MODEL_BEST_LIMIAR = 0.46
 
 @dataclass
 class ModelTrainerConfig:
@@ -45,7 +45,7 @@ class ModelTrainer:
             logistic_regression_parameters = {
                 'solver': 'lbfgs',
                 'penalty': 'l2',
-                'C' : 19.312640661491187,
+                'C' : 9.656320330745594,
                 'class_weight': 'balanced',
                 'fit_intercept': False,
                 'max_iter' : 2000, 
@@ -54,13 +54,12 @@ class ModelTrainer:
 
             xgboost_parameters = {
                 'booster': 'gbtree', 
-                'eta': 0.21918159875692625, 
+                'eta': 0.2586212527455788, 
                 'eval_metric': 'auc', 
-                'max_depth': 8, 
-                'max_leaves': 7, 
-                'n_estimators': 37, 
-                'objective': 
-                'binary:logistic', 
+                'max_depth': 10, 
+                'max_leaves': 9, 
+                'n_estimators': 54, 
+                'objective': 'binary:logistic',
                 'seed': 42
             }
 

@@ -1,12 +1,14 @@
 import os
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from dataclasses import dataclass
+
 from src.paths import ARTIFACTS_PATH, DATA_PATH
 from src.paths import crate_directory_if_not_exist
 from src.exception import CustomException
 from src.logger import logging
-
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from dataclasses import dataclass
 
 from src.components.data_transformation import DataTransformation
 from src.components.model_trainer import ModelTrainer
@@ -35,6 +37,31 @@ class DataIngestion:
     def __init__(self):
         self.ingestion_config = DataIngestionConfig()
 
+    def __clean_data(self, df: pd.DataFrame):
+        '''
+        Helper function to clean the given data frame.
+
+        Parameters
+        ---
+        * df: data frame to clean.
+
+        Return
+        ---
+        * the cleaned data frame.
+        '''
+
+        # remove invalid string
+        df_clean = df[df['text'].str.contains('\w')]
+
+        # remove invalid 'generated' values
+        df_clean = df_clean[df_clean['generated'].isin([0, 1])]
+
+        # remove text with less than 300 characters
+        texts_lengths = np.array([len(text) for text in df_clean['text']])
+        df_clean = df_clean[texts_lengths >= 300]
+
+        return df_clean
+
     def initiate_data_ingestion(self):
         logging.info('Starting data ingestion.')
 
@@ -45,8 +72,11 @@ class DataIngestion:
             crate_directory_if_not_exist(ARTIFACTS_PATH)
             df.to_csv(self.ingestion_config.raw_data_path, index=False, header=True)
 
+            logging.info('Data-cleaning initiated.')
+            df_clean = self.__clean_data(df)
+
             logging.info('Train-Test split initiated.')
-            train_set, test_set = train_test_split(df, test_size=0.2, random_state=42, stratify=df['generated'])
+            train_set, test_set = train_test_split(df_clean, test_size=0.2, random_state=42, stratify=df_clean['generated'])
 
             train_set.to_csv(self.ingestion_config.train_data_path, index=False, header=True)
             test_set.to_csv(self.ingestion_config.test_data_path, index=False, header=True)
