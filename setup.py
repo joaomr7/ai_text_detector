@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
-from scripts.setup_spacy import download_spacy_model
+import atexit
+import subprocess
 
 HYPHEN_E_DOT = '-e .'
 
@@ -17,6 +18,14 @@ def get_requirements(file_path):
 
     return requirements
 
+def install_spacy_model():
+    '''
+    This function runs a prompt to install the required spacy model.
+    '''
+    subprocess.run(['python .\scripts\setup_spacy.py'])
+
+atexit.register(install_spacy_model)
+
 setup(
     name='ai_text_generated_detection',
     version='1.0.0',
@@ -26,6 +35,3 @@ setup(
     packages=find_packages(),
     install_requires=get_requirements('requirements.txt')
 )
-
-# download spacy model
-download_spacy_model()
