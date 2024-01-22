@@ -105,7 +105,7 @@ def main_page():
     st.text('AI text detector')
 
     # description
-    st.caption('''This tool is not perfect. Be aware that mistakes can occur and by using this you agree that any bad use of this tool is just your fault.''')
+    st.caption('''This tool is not perfect. Be aware that mistakes can occur and by using this you agree that any bad use of the results from this tool is completely of your responsibility.''')
 
     # form
     main_form()

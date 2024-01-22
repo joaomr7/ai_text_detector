@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from scripts.setup_spacy import download_spacy_model
 
 HYPHEN_E_DOT = '-e .'
 
@@ -18,15 +19,13 @@ def get_requirements(file_path):
 
 setup(
     name='ai_text_generated_detection',
-    version='0.0.0',
+    version='1.0.0',
     description='project to predict whether a text was created by an A.I. or human',
     author='João Marcos Ressetti',
     author_email='jmressetti.3.4@gmail.com',
     packages=find_packages(),
-    install_requires=get_requirements('requirements.txt'),
-    entry_points={
-        'console_scripts' : [
-            'setup_spacy = scripts.setup_spacy:main'
-        ]
-    }
+    install_requires=get_requirements('requirements.txt')
 )
+
+# download spacy model
+download_spacy_model()

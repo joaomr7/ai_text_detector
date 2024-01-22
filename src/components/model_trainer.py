@@ -1,9 +1,7 @@
 import os
 from dataclasses import dataclass
 
-from sklearn.ensemble import VotingClassifier
 from sklearn.linear_model import LogisticRegression
-from xgboost import XGBClassifier
 
 from src.exception import CustomException
 from src.logger import logging
@@ -12,7 +10,7 @@ from src.paths import ARTIFACTS_PATH
 from src.utils import save_object, evaluate_model_performance, format_model_metrics
 
 # this constant stores the best decision limiar of the model
-MODEL_BEST_LIMIAR = 0.46
+MODEL_BEST_LIMIAR = 0.54
 
 @dataclass
 class ModelTrainerConfig:
@@ -52,21 +50,7 @@ class ModelTrainer:
                 'random_state' : 42
             }
 
-            xgboost_parameters = {
-                'booster': 'gbtree', 
-                'eta': 0.2586212527455788, 
-                'eval_metric': 'auc', 
-                'max_depth': 10, 
-                'max_leaves': 9, 
-                'n_estimators': 54, 
-                'objective': 'binary:logistic',
-                'seed': 42
-            }
-
-            model = VotingClassifier(estimators=[
-                ('lr_model', LogisticRegression(**logistic_regression_parameters)),
-                ('xgb_model', XGBClassifier(**xgboost_parameters))
-            ], voting='soft')
+            model = LogisticRegression(**logistic_regression_parameters)
 
             logging.info('Initiate model training.')
             model.fit(X_train, y_train)
