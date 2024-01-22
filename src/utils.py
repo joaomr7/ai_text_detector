@@ -6,18 +6,12 @@ from src.paths import crate_directory_if_not_exist
 
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
 
-# fix path issues
-import pathlib
-from pathlib import Path
-
-pathlib.PosixPath = pathlib.WindowsPath
-
 def save_object(file_path, obj):
     try:
         dir_path = os.path.dirname(file_path)
         crate_directory_if_not_exist(dir_path)
 
-        with open(Path(file_path), 'wb') as file:
+        with open(file_path, 'wb') as file:
             pickle.dump(obj, file)
 
     except Exception as e:
@@ -25,7 +19,7 @@ def save_object(file_path, obj):
     
 def load_object(file_path):
     try:
-        with open(Path(file_path), 'rb') as file:
+        with open(file_path, 'rb') as file:
             return pickle.load(file)
     
     except Exception as e:

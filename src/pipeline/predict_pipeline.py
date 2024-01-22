@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from src.exception import CustomException
 from src.paths import ARTIFACTS_PATH
@@ -18,8 +19,8 @@ class PredictPipeline():
         Helper function to load model and preprocessor.
         '''
 
-        model_path = os.path.join(ARTIFACTS_PATH, 'model.pkl')
-        preprocessor_path = os.path.join(ARTIFACTS_PATH, 'preprocessor.pkl')
+        model_path = Path(ARTIFACTS_PATH) / 'model.pkl'
+        preprocessor_path = Path(ARTIFACTS_PATH) / 'preprocessor.pkl'
 
         self.model = load_object(file_path=model_path)
         self.preprocessor = load_object(file_path=preprocessor_path)
