@@ -15,7 +15,7 @@ def save_object(file_path, obj):
             pickle.dump(obj, file)
 
     except Exception as e:
-        raise CustomException(e)
+        raise CustomException(f'Error saving object to {file_path}: {e}')
     
 def load_object(file_path):
     try:
@@ -23,7 +23,7 @@ def load_object(file_path):
             return pickle.load(file)
     
     except Exception as e:
-        raise CustomException(e)
+        raise CustomException(f'Error loading object from {file_path}: {e}')
 
 def evaluate_model_performance(model, limiar, X, y):
     try:
