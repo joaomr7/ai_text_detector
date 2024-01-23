@@ -1,4 +1,4 @@
-# AI Text Generated Detector
+# AI Text Detector
 
 [![author](https://img.shields.io/badge/author-joaomr7-red.svg)](https://github.com/joaomr7)
 [![](https://img.shields.io/badge/python-blue.svg)](https://www.python.org/downloads/release/python-365/)
