@@ -7,19 +7,15 @@ MIN_DOCUMENT_CHARACTERS = 300
 MAX_DOCUMNETS_CHARACTERS = 3000
 
 # model
-@st.cache_resource
-def get_predict_pipeline():
-    return PredictPipeline()
+def initialized_predict_pipeline():
+    if 'predict_pipeline' not in st.session_state:
+        st.session_state.predict_pipeline = PredictPipeline()
 
 def predict_documnet(document):
-    proba = st.session_state.pipeline.predict_single_document(document)
+    proba = st.session_state.predict_pipeline.predict_single_document(document)
     return proba
 
 # controller
-def initialized_predict_pipeline():
-    if 'predict_pipeline' not in st.session_state:
-        st.session_state.pipeline = get_predict_pipeline()
-
 def validate_document(document):
     return len(document.strip()) >= MIN_DOCUMENT_CHARACTERS
 
