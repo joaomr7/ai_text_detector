@@ -11,7 +11,7 @@ def save_object(file_path, obj):
         dir_path = os.path.dirname(file_path)
         crate_directory_if_not_exist(dir_path)
 
-        with open(file_path, 'wb') as file:
+        with open(str(file_path), 'wb') as file:
             pickle.dump(obj, file)
 
     except Exception as e:
@@ -19,7 +19,7 @@ def save_object(file_path, obj):
     
 def load_object(file_path):
     try:
-        with open(file_path, 'rb') as file:
+        with open(str(file_path), 'rb') as file:
             return pickle.load(file)
     
     except Exception as e:
