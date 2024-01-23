@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-from scripts.setup_spacy import download_spacy_model
 
 HYPHEN_E_DOT = '-e .'
 
@@ -26,6 +25,3 @@ setup(
     packages=find_packages(),
     install_requires=get_requirements('requirements.txt')
 )
-
-# download spacy model
-download_spacy_model()

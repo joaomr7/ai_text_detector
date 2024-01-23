@@ -1,7 +1,7 @@
 import streamlit as st
 
 from src.pipeline.predict_pipeline import PredictPipeline
-from src.components.model_trainer import MODEL_BEST_LIMIAR
+from src.components.model_trainer import MODEL_BEST_LOW_LIMIAR, MODEL_BEST_DECISION_LIMIAR, MODEL_BEST_HIGH_LIMIAR
 
 MIN_DOCUMENT_CHARACTERS = 300
 MAX_DOCUMNETS_CHARACTERS = 3000
@@ -23,44 +23,31 @@ def initialized_predict_pipeline():
 def validate_document(document):
     return len(document.strip()) >= MIN_DOCUMENT_CHARACTERS
 
-def process_proba(proba, best_limiar):
+def process_proba(proba):
     '''
     Helper function to evaluate the given probability into confidence intervals.
 
     Paramaters
     ---
     * proba: the probability.
-    * best_limiar: the decision limiar.
 
     Return
     ---
     * bool: generated or not by an AI.
-    * str: formated confidence level.
+    * str: formated confidence level.sss
     '''
 
-    if proba < best_limiar:
-        proba_section = best_limiar / 3
-
-        if proba < proba_section:
-            return False, '**Human document** detected with **HIGH** confidence'
-        
-        elif proba < proba_section * 2:
-            return False, '**Human document** detected with **MEDIUM** confidence'
-        
-        else:
-            return False, '**Human document** detected with **LOW** confidence'
-        
+    if proba < MODEL_BEST_LOW_LIMIAR:
+        return False, '**Human document** detected with **HIGH** confidence'
+    
+    elif proba < MODEL_BEST_DECISION_LIMIAR:
+        return False, '**Human document** detected with **LOW** confidence'
+    
+    elif proba < MODEL_BEST_HIGH_LIMIAR:
+        return True, '**AI document** detected with **LOW** confidence'
+    
     else:
-        proba_section = (1 - best_limiar) / 3
-
-        if proba < best_limiar + proba_section:
-            return True, '**AI document** detected with **LOW** confidence'
-        
-        elif proba < best_limiar + proba_section * 2:
-            return True, '**AI document** detected with **MEDIUM** confidence'
-        
-        else:
-            return True, '**AI document** detected with **HIGH** confidence'
+        return True, '**AI document** detected with **HIGH** confidence'
 
 # view
 def main_form():
@@ -83,7 +70,7 @@ def main_form():
             else:
                 # predict proba
                 documnet_proba = predict_documnet(document)
-                result, label = process_proba(documnet_proba, MODEL_BEST_LIMIAR)
+                result, label = process_proba(documnet_proba)
 
                 if result:
                     st.error(body=label)

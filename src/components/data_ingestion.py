@@ -25,9 +25,9 @@ class DataIngestionConfig:
     * raw_data_path: the file path to store the raw data file.
     '''
 
-    train_data_path: str = os.path.join(ARTIFACTS_PATH, 'train.csv')
-    test_data_path: str = os.path.join(ARTIFACTS_PATH, 'test.csv')
-    raw_data_path: str = os.path.join(ARTIFACTS_PATH, 'raw.csv')
+    train_data_path: str = ARTIFACTS_PATH / 'train.csv'
+    test_data_path: str = ARTIFACTS_PATH / 'test.csv'
+    raw_data_path: str = ARTIFACTS_PATH / 'raw.csv'
 
 class DataIngestion:
     '''
@@ -66,7 +66,7 @@ class DataIngestion:
         logging.info('Starting data ingestion.')
 
         try:
-            df = pd.read_csv(DATA_PATH + '\Training_Essay_Data.csv')
+            df = pd.read_csv(DATA_PATH / 'Training_Essay_Data.csv')
             logging.info('Read the dataset as dataframe.')
 
             crate_directory_if_not_exist(ARTIFACTS_PATH)

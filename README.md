@@ -69,6 +69,19 @@ To preprocess the data I used some libraries like Spacy, SymSpell and textstat. 
 
 The best model for this task was Logistic Regression Classifier, that has a good performance with well balanced metrics on training and test data. Also this model gives a good importance for almost all the features, in general in takes into account the reading ease score, lexical diversity score and some parts of the word2vec representation of the text to evaluate if it was generates by human or AI.
 
+# Model Comprehension
+
+For better comprehension of the model results, I created some confidence levels, which are:
+
+* Human text with low confidence;
+
+* Human text with high confidence;
+
+* AI text with low confidence;
+
+* AI text with high confidence.
+
+The idea is that high confidence stands on ranges where the model precision is higher.
 
 # Deployment
 

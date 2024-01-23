@@ -1,8 +1,9 @@
 import os
+from pathlib import Path
 
-DATA_PATH = 'data'
+DATA_PATH = Path('data')
 LOGS_PATH = os.path.join(os.getcwd(), 'logs')
-ARTIFACTS_PATH = 'artifacts'
+ARTIFACTS_PATH = Path('artifacts')
 
 def crate_directory_if_not_exist(directory_path):
     '''

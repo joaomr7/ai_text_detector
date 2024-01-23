@@ -168,7 +168,7 @@ class DataTransformationConfig:
     * preprocessor_obj_file_path: the file path to store the preprocessor object.
     '''
 
-    preprocessor_obj_file_path: str = os.path.join(ARTIFACTS_PATH, 'preprocessor.pkl')
+    preprocessor_obj_file_path: str = ARTIFACTS_PATH / 'preprocessor.pkl'
 
 class DataTransformation:
     '''
