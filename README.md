@@ -15,7 +15,7 @@ This project is for my personal Data Science portfolio. The main idea is to deve
 
 To download and build this project on your machine, use the following commands in your terminal:
 
-1. `git clone --recursive https://github.com/joaomr7/ai_text_generated_detection.git`
+1. `git clone --recursive https://github.com/joaomr7/ai_text_detector.git`
 
 2. `pip install -r requirements.txt`
 
