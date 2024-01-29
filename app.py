@@ -1,4 +1,8 @@
 import streamlit as st
+import logging
+
+# disable logging
+logging.getLogger().addHandler(logging.NullHandler())
 
 from src.pipeline.predict_pipeline import PredictPipeline
 from src.components.model_trainer import MODEL_BEST_LOW_LIMIAR, MODEL_BEST_DECISION_LIMIAR, MODEL_BEST_HIGH_LIMIAR
@@ -7,12 +11,13 @@ MIN_DOCUMENT_CHARACTERS = 300
 MAX_DOCUMNETS_CHARACTERS = 3000
 
 # model
-def initialized_predict_pipeline():
-    if 'predict_pipeline' not in st.session_state:
-        st.session_state.predict_pipeline = PredictPipeline()
+@st.cache_resource
+def load_predict_pipeline():
+    return PredictPipeline()
 
 def predict_documnet(document):
-    proba = st.session_state.predict_pipeline.predict_single_document(document)
+    predict_pipeline = load_predict_pipeline()
+    proba = predict_pipeline.predict_single_document(document)
     return proba
 
 # controller
@@ -79,9 +84,6 @@ def main_page():
         page_title='AI Snitch',
         page_icon='🤖'
     )
-
-    # load predict pipeline
-    initialized_predict_pipeline()
 
     # Header
     st.title(':red[AI] Snitch')
