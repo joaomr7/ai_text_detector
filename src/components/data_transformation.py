@@ -29,20 +29,37 @@ class TextPreprocessing(BaseEstimator, TransformerMixin):
     Custom sklearn transformer to apply text preprocessing in text data.
     '''
 
-    def __init__(self):
-        # setting up spacy and disabling unused pipeline components
-        self.nlp = spacy.load('en_core_web_md', disable=['parser', 'ner', 'lemmatizer', 'textcat', 'custom'])
+    def __init__(self, nlp=None, sym_spell=None):
+        self.__nlp = nlp
+        self.__sym_spell = sym_spell
 
-        # setting up SymSpell to typo count
-        self.sym_spell = SymSpell(max_dictionary_edit_distance=1, prefix_length=7)
-
-        # load symspell english dictionary
-        with importlib.resources.open_text('symspellpy', 'frequency_dictionary_en_82_765.txt') as file:
-            self.sym_spell.load_dictionary(file.name, term_index=0, count_index=1)
-
-    def fit(self, X, y=None):
-        return self
+    def __reduce__(self):
+        # do not serialize nlp and sym_spell
+        return (self.__class__, (None, None))
         
+    def __initialize_resources(self):
+        '''
+        Helper function to load the required TextPreprocessing resources.
+        '''
+
+        try:
+            # check if nlp is already loaded
+            if self.__nlp is None:
+                # setting up spacy and disabling unused pipeline components
+                self.__nlp = spacy.load('en_core_web_md', disable=['parser', 'ner', 'lemmatizer', 'textcat', 'custom'])
+
+            # checl if sym_spell is already loaded
+            if self.__sym_spell is None:
+                # setting up SymSpell to typo count
+                self.__sym_spell = SymSpell(max_dictionary_edit_distance=1, prefix_length=7)
+
+                # load symspell english dictionary
+                with importlib.resources.open_text('symspellpy', 'frequency_dictionary_en_82_765.txt') as file:
+                    self.__sym_spell.load_dictionary(file.name, term_index=0, count_index=1)
+
+        except Exception as e:
+            raise CustomException(e)
+
     def __calculate_reading_ease_score(self, doc: Doc) -> int:
         '''
         Helper function to calculate reading ease score.
@@ -83,6 +100,8 @@ class TextPreprocessing(BaseEstimator, TransformerMixin):
         else:
             return unique_words_count / total_words_count
      
+    def fit(self, X, y=None):
+        return self
 
     def transform(self, X, y=None):
         '''
@@ -106,9 +125,13 @@ class TextPreprocessing(BaseEstimator, TransformerMixin):
         ---
         * a numpy array with the columns: 300 size vector (representing the text), lexical_deversity_score and reading_ease_score
         '''
+
         try:
+            # initialize resources
+            self.__initialize_resources()
+
             # tranfrom texts in spacy docs (wich applies tokenization)
-            docs = [doc for doc in self.nlp.pipe(X)]
+            docs = [doc for doc in self.__nlp.pipe(X)]
 
             text_vectors = []
             reading_ease_scores = []
@@ -136,7 +159,7 @@ class TextPreprocessing(BaseEstimator, TransformerMixin):
                     # check if it has vector representaion
                     if not token.has_vector:
                         # lookup for typo
-                        suggestions = self.sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=1)
+                        suggestions = self.__sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=1)
 
                         # check if has any suggestion
                         if not suggestions:
@@ -149,7 +172,7 @@ class TextPreprocessing(BaseEstimator, TransformerMixin):
                     spaces.append(token.whitespace_)
 
                 # create and add text vector to list
-                clean_doc = Doc(vocab=self.nlp.vocab, words=words, spaces=spaces)
+                clean_doc = Doc(vocab=self.__nlp.vocab, words=words, spaces=spaces)
                 text_vectors.append(clean_doc.vector)
 
             # return numpy array
